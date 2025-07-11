@@ -42,13 +42,11 @@ async def main():
                 print("Cookie popup dismissed")
                 break
 
-        # Select Product Family: Windows and Developer Tools
-        print("Selecting Product Family: Windows and Developer Tools")
+        # Select Product Family: Windows
+        print("Selecting Product Family: Windows")
         await page.click("text=Product Family")
         await page.wait_for_selector("text=Windows")
         await page.click("text=Windows")
-        await page.wait_for_selector("text=Developer Tools")
-        await page.click("text=Developer Tools")
 
         # Select Product: Windows Server 2016 and matching .NET Framework versions
         print("Selecting Product: Windows Server 2016 and matching .NET Framework versions")
@@ -67,21 +65,39 @@ async def main():
         await page.mouse.click(100, 100)  # Dismiss dropdown
         await page.wait_for_timeout(3000)
 
-
-
         print("Waiting for result rows...")
         await page.wait_for_selector('div[role="rowgroup"] div[role="row"]', timeout=20000)
 
-        print("Extracting data...")
-        rows = await page.query_selector_all('div[role="rowgroup"] div[role="row"]')
+        print("Extracting all data by scrolling...")
+        results_container = await page.query_selector('.ms-DetailsList-contentWrapper')
         data = []
-        for row in rows:
-            cells = await row.query_selector_all('div[role="gridcell"]')
-            date = await cells[0].inner_text() if len(cells) > 0 else ""
-            details = await cells[8].inner_text() if len(cells) > 8 else ""
-            data.append({"date": date.strip(), "details": details.strip()})
+        seen = set()
+        last_seen_count = 0
+        if results_container:
+            await results_container.evaluate("(el) => el.scrollTo(0, 0)")
+            for scroll_num in range(50):  # Adjust as needed for more rows
+                rows = await page.query_selector_all('div[role="rowgroup"] div[role="row"]')
+                print(f"Scroll {scroll_num}: Found {len(rows)} rows currently visible")
+                for row in rows:
+                    cells = await row.query_selector_all('div[role="gridcell"]')
+                    if len(cells) < 9:
+                        continue
+                    date = await cells[0].inner_text()
+                    details = await cells[8].inner_text()
+                    key = f"{date.strip()}|{details.strip()}"
+                    if key not in seen:
+                        seen.add(key)
+                        data.append({"date": date.strip(), "details": details.strip()})
+                if len(seen) == last_seen_count:
+                    print("No new rows found, stopping scroll.")
+                    break
+                last_seen_count = len(seen)
+                await results_container.evaluate("(el) => el.scrollBy(0, 1000)")
+                await page.wait_for_timeout(300)
+        else:
+            print("❌ Could not find scroll container for results")
 
-        print(f"Extracted {len(data)} rows")
+        print(f"Extracted {len(data)} unique rows")
 
         print("Fetching CVE titles...")
         for row in data:
