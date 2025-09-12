@@ -78,6 +78,20 @@ async def main():
             for scroll_num in range(50):  # Adjust as needed for more rows
                 rows = await page.query_selector_all('div[role="rowgroup"] div[role="row"]')
                 print(f"Scroll {scroll_num}: Found {len(rows)} rows currently visible")
+
+                # for row in rows:
+                #     cells = await row.query_selector_all('div[role="gridcell"]')
+                #     if len(cells) < 9:
+                #         continue
+                #     date = await cells[0].inner_text()
+                #     details = await cells[8].inner_text()
+                #     print(f"Row: date={date.strip()}, details={details.strip()}")
+                #     key = f"{date.strip()}|{details.strip()}"
+                #     if key not in seen:
+                #         seen.add(key)
+                #         data.append({"date": date.strip(), "details": details.strip()})
+
+
                 for row in rows:
                     cells = await row.query_selector_all('div[role="gridcell"]')
                     if len(cells) < 9:
