@@ -4,7 +4,8 @@ from playwright.async_api import async_playwright
 import os
 
 # ---- CONFIG ----
-input_file = r"windows_update_scraper\using_python_mrsc_file_download\Security Updates 2025-09-12-014816pm.xlsx"
+input_file = r"windows_update_scraper\using_python_mrsc_file_download\Security Updates 2026-02-11-111432am.xlsx"
+
 # Save output in the same folder as this script
 output_file = os.path.join(os.path.dirname(__file__), "filtered_updates.xlsx")
 base_url = "https://msrc.microsoft.com/update-guide/vulnerability/"
